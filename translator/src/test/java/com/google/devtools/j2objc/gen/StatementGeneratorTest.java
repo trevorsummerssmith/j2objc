@@ -1555,7 +1555,7 @@ public class StatementGeneratorTest extends GenerationTest {
         + "private static final String STR = \"\"; "
         + "private void f(String s) { switch(s) { case STR: return; } } "
         + "public void g() { f(\"\"); } }";
-    // Assertion was thrown in StatementGenerator.getStringConstant(), due to the QualifiedName
+    // Assertion was thrown in OCamlStatementGenerator.getStringConstant(), due to the QualifiedName
     // node not having a constant value.
     translateSourceFile(source, "A", "A.m");
   }

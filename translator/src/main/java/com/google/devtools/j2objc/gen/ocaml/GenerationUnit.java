@@ -11,23 +11,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.devtools.j2objc.gen;
+package com.google.devtools.j2objc.gen.ocaml;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.devtools.j2objc.Options;
-import com.google.devtools.j2objc.ast.AbstractTypeDeclaration;
-import com.google.devtools.j2objc.ast.CompilationUnit;
-import com.google.devtools.j2objc.ast.Javadoc;
-import com.google.devtools.j2objc.ast.NativeDeclaration;
-import com.google.devtools.j2objc.ast.TreeUtil;
+import com.google.devtools.j2objc.ast.*;
 import com.google.devtools.j2objc.file.InputFile;
 import com.google.devtools.j2objc.util.ElementUtil;
+
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Collection;
 import java.util.TreeMap;
-import javax.annotation.Nullable;
 
 /**
  * A single unit of generated code, to be turned into a single pair of .h and .m files.

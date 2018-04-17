@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.google.devtools.j2objc.gen;
+package com.google.devtools.j2objc.gen.ocaml;
 
-import com.google.devtools.j2objc.GenerationTest;
+import com.google.devtools.j2objc.OCamlGenerationTest;
 import com.google.devtools.j2objc.ast.Statement;
 
 import java.util.List;
@@ -27,16 +27,16 @@ import java.util.List;
  *
  * @author Tom Ball
  */
-public class ArrayCreationTest extends GenerationTest {
+public class ArrayCreationTest extends OCamlGenerationTest {
 
+  // # let foo : bool array = Array.make 3 true;;
+  //val foo : bool array = [|true; true; true|]
   public void testBooleanArrayCreationNoInitializer() {
     List<Statement> stmts = translateStatements("boolean[] foo = new boolean[3];");
     assertEquals(1, stmts.size());
-    // TODO here boolean[] foo=IOSBooleanArray.arrayWithLength:(3);
-    // This is not valid java code. is that correct, or is that a bug, or is that how it prints and it
-    // is valid java code just prints weird?
     String result = generateStatement(stmts.get(0));
-    assertEquals("boolean[] foo=IOSBooleanArray.arrayWithLength:(3);\n", result);
+    // objc: IOSBooleanArray *foo = [IOSBooleanArray arrayWithLength:3];
+    assertEquals("let foo : bool array = Array.make 3 true", result);
   }
 
   public void testByteArrayCreationNoInitializer() {

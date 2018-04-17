@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.devtools.j2objc.gen;
+package com.google.devtools.j2objc.gen.ocaml;
 
 import com.google.common.collect.Sets;
 import com.google.devtools.j2objc.J2ObjC;

@@ -100,6 +100,9 @@ public class J2ObjC {
       }
 
       parser = createParser(options);
+      // Process the annotations cuz this pipeline does not do that
+      // using the javac
+      // returns sources that have the annotations processed
       Parser.ProcessingResult processingResult = parser.processAnnotations(fileArgs, inputs);
       List<ProcessingContext> generatedInputs = processingResult.getGeneratedSources();
       inputs.addAll(generatedInputs); // Ensure all generatedInputs are at end of input list.
@@ -111,6 +114,7 @@ public class J2ObjC {
         parser.addSourcepathEntry(preProcessorTempDir.getAbsolutePath());
       }
 
+      // TODO not totally clear what all of this input preprocessing is doing
       InputFilePreprocessor inputFilePreprocessor = new InputFilePreprocessor(parser);
       inputFilePreprocessor.processInputs(inputs);
       if (ErrorUtil.errorCount() > 0) {
@@ -121,6 +125,7 @@ public class J2ObjC {
         parser.prependSourcepathEntry(strippedSourcesDir.getPath());
       }
 
+      // Translate the source files from java to objc
       options.getHeaderMap().loadMappings();
       TranslationProcessor translationProcessor =
           new TranslationProcessor(parser, loadDeadCodeMap());
@@ -173,7 +178,7 @@ public class J2ObjC {
       ErrorUtil.error(e.getMessage());
       System.exit(1);
     }
-
+    System.out.println("XXX");
     run(files, options);
 
     TimingLevel timingLevel = options.timingLevel();

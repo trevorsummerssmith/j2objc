@@ -21,42 +21,7 @@ import com.google.devtools.j2objc.gen.GenerationUnit;
 import com.google.devtools.j2objc.gen.ObjectiveCHeaderGenerator;
 import com.google.devtools.j2objc.gen.ObjectiveCImplementationGenerator;
 import com.google.devtools.j2objc.gen.ObjectiveCSegmentedHeaderGenerator;
-import com.google.devtools.j2objc.translate.AbstractMethodRewriter;
-import com.google.devtools.j2objc.translate.AnnotationRewriter;
-import com.google.devtools.j2objc.translate.ArrayRewriter;
-import com.google.devtools.j2objc.translate.Autoboxer;
-import com.google.devtools.j2objc.translate.CastResolver;
-import com.google.devtools.j2objc.translate.ComplexExpressionExtractor;
-import com.google.devtools.j2objc.translate.ConstantBranchPruner;
-import com.google.devtools.j2objc.translate.DeadCodeEliminator;
-import com.google.devtools.j2objc.translate.DefaultMethodShimGenerator;
-import com.google.devtools.j2objc.translate.DestructorGenerator;
-import com.google.devtools.j2objc.translate.EnhancedForRewriter;
-import com.google.devtools.j2objc.translate.EnumRewriter;
-import com.google.devtools.j2objc.translate.Functionizer;
-import com.google.devtools.j2objc.translate.GwtConverter;
-import com.google.devtools.j2objc.translate.InitializationNormalizer;
-import com.google.devtools.j2objc.translate.InnerClassExtractor;
-import com.google.devtools.j2objc.translate.JavaCloneWriter;
-import com.google.devtools.j2objc.translate.JavaToIOSMethodTranslator;
-import com.google.devtools.j2objc.translate.LabelRewriter;
-import com.google.devtools.j2objc.translate.LambdaRewriter;
-import com.google.devtools.j2objc.translate.LambdaTypeElementAdder;
-import com.google.devtools.j2objc.translate.MetadataWriter;
-import com.google.devtools.j2objc.translate.NilCheckResolver;
-import com.google.devtools.j2objc.translate.NumberMethodRewriter;
-import com.google.devtools.j2objc.translate.OcniExtractor;
-import com.google.devtools.j2objc.translate.OperatorRewriter;
-import com.google.devtools.j2objc.translate.OuterReferenceResolver;
-import com.google.devtools.j2objc.translate.PackageInfoRewriter;
-import com.google.devtools.j2objc.translate.PrivateDeclarationResolver;
-import com.google.devtools.j2objc.translate.Rewriter;
-import com.google.devtools.j2objc.translate.StaticVarRewriter;
-import com.google.devtools.j2objc.translate.SuperMethodInvocationRewriter;
-import com.google.devtools.j2objc.translate.SwitchRewriter;
-import com.google.devtools.j2objc.translate.UnsequencedExpressionRewriter;
-import com.google.devtools.j2objc.translate.VarargsRewriter;
-import com.google.devtools.j2objc.translate.VariableRenamer;
+import com.google.devtools.j2objc.translate.*;
 import com.google.devtools.j2objc.types.HeaderImportCollector;
 import com.google.devtools.j2objc.types.ImplementationImportCollector;
 import com.google.devtools.j2objc.types.Import;
@@ -64,6 +29,7 @@ import com.google.devtools.j2objc.util.CodeReferenceMap;
 import com.google.devtools.j2objc.util.ErrorUtil;
 import com.google.devtools.j2objc.util.Parser;
 import com.google.devtools.j2objc.util.TimeTracker;
+
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -74,21 +40,20 @@ import java.util.logging.Logger;
  *
  * @author Tom Ball, Keith Stanger, Mike Thvedt
  */
-public class TranslationProcessor extends FileProcessor {
+public class OCamlTranslationProcessor extends FileProcessor {
 
-  private static final Logger logger = Logger.getLogger(TranslationProcessor.class.getName());
+  private static final Logger logger = Logger.getLogger(OCamlTranslationProcessor.class.getName());
 
   private final CodeReferenceMap deadCodeMap;
 
   private int processedCount = 0;
 
-  public TranslationProcessor(Parser parser, CodeReferenceMap deadCodeMap) {
+  public OCamlTranslationProcessor(Parser parser, CodeReferenceMap deadCodeMap) {
     super(parser);
     this.deadCodeMap = deadCodeMap;
   }
 
   // Trevor this is where it starts converting.
-  // called from FileProcessor.processCompiledSource
   @Override
   protected void processConvertedTree(ProcessingContext input, CompilationUnit unit) {
     String unitName = input.getOriginalSourcePath();
@@ -130,6 +95,8 @@ public class TranslationProcessor extends FileProcessor {
   public static void applyMutations(CompilationUnit unit, CodeReferenceMap deadCodeMap,
       TimeTracker ticker) {
     ticker.push();
+
+    // TODO trevor - is this still valid java source at this point? I think so?
 
     // Before: OuterReferenceResolver - OuterReferenceResolver needs the bindings fixed.
     new LambdaTypeElementAdder(unit).run();
@@ -269,8 +236,9 @@ public class TranslationProcessor extends FileProcessor {
     new StaticVarRewriter(unit).run();
     ticker.tick("StaticVarRewriter");
 
+    // TODO trevor - removing this for now as we do not want this.
     // After: StaticVarRewriter, OperatorRewriter - They set the
-    //   hasRetainedResult on ArrayCreation nodes.
+    //   hasRetainedResult on ArrayCreation nodes
     new ArrayRewriter(unit).run();
     ticker.tick("ArrayRewriter");
 

@@ -12,7 +12,7 @@
  * limitations under the License.
  */
 
-package com.google.devtools.j2objc.gen;
+package com.google.devtools.j2objc.gen.ocaml;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -26,9 +26,10 @@ import com.google.devtools.j2objc.types.ImplementationImportCollector;
 import com.google.devtools.j2objc.types.Import;
 import com.google.devtools.j2objc.util.ElementUtil;
 import com.google.devtools.j2objc.util.NameTable;
+
+import javax.lang.model.element.TypeElement;
 import java.util.List;
 import java.util.Set;
-import javax.lang.model.element.TypeElement;
 
 /**
  * Contains the generated source code and additional context for a single Java

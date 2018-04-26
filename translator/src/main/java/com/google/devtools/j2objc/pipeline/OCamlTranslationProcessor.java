@@ -22,6 +22,7 @@ import com.google.devtools.j2objc.gen.ObjectiveCHeaderGenerator;
 import com.google.devtools.j2objc.gen.ObjectiveCImplementationGenerator;
 import com.google.devtools.j2objc.gen.ObjectiveCSegmentedHeaderGenerator;
 import com.google.devtools.j2objc.translate.*;
+import com.google.devtools.j2objc.translate.ocaml.ArrayRewriter;
 import com.google.devtools.j2objc.types.HeaderImportCollector;
 import com.google.devtools.j2objc.types.ImplementationImportCollector;
 import com.google.devtools.j2objc.types.Import;
@@ -236,7 +237,6 @@ public class OCamlTranslationProcessor extends FileProcessor {
     new StaticVarRewriter(unit).run();
     ticker.tick("StaticVarRewriter");
 
-    // TODO trevor - removing this for now as we do not want this.
     // After: StaticVarRewriter, OperatorRewriter - They set the
     //   hasRetainedResult on ArrayCreation nodes
     new ArrayRewriter(unit).run();

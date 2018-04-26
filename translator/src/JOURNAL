@@ -1,0 +1,13 @@
+* Finished adding 'true'.
+
+* Left off at printMethodInvocationNameAndArgs
+  - we are replacing the ArrayCreation node with a method invocation.
+  - Array.make 3; prints correctly!
+  - DONE correctly generate type for foo (now is 'Array *')
+
+The codebase appears to mutate the java ast via the Translate phase not into
+an objc ast, nor a java ast, but something halfway in between. The generate
+phase takes that modified ast and generates the objc. At my first read it seems
+like a lot of the logic is tightly coupled between the translate and generation
+phases. Will proceed by implementing a few unit tests until I have a better
+understanding of the approach.

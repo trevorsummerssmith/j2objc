@@ -28,22 +28,20 @@ import java.util.List;
  * @author Tom Ball
  */
 public class ArrayCreationTest extends OCamlGenerationTest {
-
-  // # let foo : bool array = Array.make 3 true;;
-  //val foo : bool array = [|true; true; true|]
+  
   public void testBooleanArrayCreationNoInitializer() {
     List<Statement> stmts = translateStatements("boolean[] foo = new boolean[3];");
     assertEquals(1, stmts.size());
     String result = generateStatement(stmts.get(0));
-    // objc: IOSBooleanArray *foo = [IOSBooleanArray arrayWithLength:3];
     assertEquals("let foo : bool array = Array.make 3 true", result);
   }
 
+  // TODO change this to Bytes.t
   public void testByteArrayCreationNoInitializer() {
     List<Statement> stmts = translateStatements("byte[] foo = new byte[3];");
     assertEquals(1, stmts.size());
     String result = generateStatement(stmts.get(0));
-    assertEquals("IOSByteArray *foo = [IOSByteArray arrayWithLength:3];", result);
+    assertEquals("let foo : char array = Array.make 3 '\000'", result);
   }
 
   public void testCharArrayCreationNoInitializer() {

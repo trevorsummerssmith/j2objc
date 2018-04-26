@@ -16,11 +16,7 @@ package com.google.devtools.j2objc.ast;
 
 import com.google.devtools.j2objc.Options;
 import com.google.devtools.j2objc.gen.SignatureGenerator;
-import com.google.devtools.j2objc.util.ElementUtil;
-import com.google.devtools.j2objc.util.NameTable;
-import com.google.devtools.j2objc.util.TranslationEnvironment;
-import com.google.devtools.j2objc.util.TranslationUtil;
-import com.google.devtools.j2objc.util.TypeUtil;
+import com.google.devtools.j2objc.util.*;
 
 /**
  * A TreeVisitor that contains CompilationUnit specific state accessible by subclasses.

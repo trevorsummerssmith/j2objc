@@ -45,6 +45,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
 
 /**
  * Singleton service for type/method/variable name support.
@@ -524,6 +525,38 @@ public class NameTable {
         : type.getKind().isPrimitive() ? "j" + TypeUtil.getName(type) : "id";
   }
 
+  // I took this from TypeUtil.getName
+  // I dont yet understand that semantic difference between stuff in typeutil and nametable.
+  // perhaps this should go in there.
+  public static String javaPrimitiveToOCamlType(TypeMirror t) {
+    String javaType;
+    switch (t.getKind()) {
+      case BOOLEAN:
+        javaType = "boolean"; break;
+      case BYTE:
+        javaType ="byte"; break;
+      case CHAR:
+        javaType ="char"; break;
+      case DOUBLE:
+        javaType ="double"; break;
+      case FLOAT:
+        javaType ="float"; break;
+      case INT:
+        javaType ="int"; break;
+      case LONG:
+        javaType ="long"; break;
+      case SHORT:
+        javaType ="short"; break;
+      case VOID:
+        javaType ="unit"; break;
+      default:
+        throw new AssertionError("Cannot resolve name for type: " + t);
+    }
+    // TODO i am still not sure the distinction between the native and primitive
+    // so this could be a misuse here
+    return javaNativeToOCamlPrimitive(javaType);
+  }
+
   /**
    * Convert a Java type to an equivalent Objective-C type with type variables
    * resolved to their bounds.
@@ -534,6 +567,10 @@ public class NameTable {
 
   public String getObjCType(VariableElement var) {
     return getObjcTypeInner(var.asType(), ElementUtil.getTypeQualifiers(var));
+  }
+
+  public String getOCamlType(VariableElement var) {
+    return getOCamlTypeInner(var.asType(), ElementUtil.getTypeQualifiers(var));
   }
 
   /**
@@ -581,9 +618,89 @@ public class NameTable {
     return objcType;
   }
 
+  /* This is:
+   *   java     bits      ocaml
+ *   - byte    8bits    int   TODO think more
+ *   - short  16bits    int   TODO Numbers.Int16
+ *   - int    32bits    int   TODO Int32
+ *   - long   64bits    int   TODO Int64
+ *   - float  32bits    float TODO
+ *   - double 32bits    float TODO
+ *   - char             Uchar.t
+ *   - String           string
+ *   - boolean          bool
+ *   java types from: https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html
+ *   */
+  // TODO trevor - replace this with the kind.
+  // see paramNameForPrimitive
+  private static String javaNativeToOCamlPrimitive(String name) {
+    switch (name) {
+      case "byte": return "int";
+      case "short": return "int";
+      case "int": return "int";
+      case "long": return "int";
+      case "float": return "float";
+      case "double": return "float";
+      case "char": return "Uchar.t";
+      case "String": return "string";
+      case "boolean": return "bool";
+      default:
+        throw new RuntimeException("unknown c type: " + name);
+    }
+  }
+
+  private String getOCamlTypeInner(TypeMirror type, String qualifiers) {
+    String ocamlType;
+    // 1. Native types are C types
+    // TODO I am using this primitive here. need to figure out what the difference is
+    // between primitive and native
+    if (type instanceof NativeType) {
+      ocamlType = javaNativeToOCamlPrimitive(((NativeType) type).getName());
+    }
+    // 2. TODO didnt look at this yet
+    else if (type instanceof PointerType) {
+      String pointeeQualifiers = null;
+      if (qualifiers != null) {
+        int idx = qualifiers.indexOf('*');
+        if (idx != -1) {
+          pointeeQualifiers = qualifiers.substring(0, idx);
+          qualifiers = qualifiers.substring(idx + 1);
+        }
+      }
+      ocamlType = getOCamlTypeInner(((PointerType) type).getPointeeType(), pointeeQualifiers);
+      ocamlType = ocamlType.endsWith("*") ? ocamlType + "*" : ocamlType + " *";
+    }
+    // 3. Primitive types
+    else if (TypeUtil.isPrimitiveOrVoid(type)) {
+      ocamlType = javaPrimitiveToOCamlType(type);
+    }
+    // 4. Arrays
+    // TODO trevor - this was under the else which looked like it has to find
+    // type bounds and such I think to figure out a class or interface. I believe
+    // the reason this was being done with the array is that they turned it into a iosarray class. as we're
+    // not doing this I think we can just deal with this here.
+    else if (typeUtil.isArray(type)) {
+      ocamlType = getOCamlTypeInner(((ArrayType) type).getComponentType(), null);
+      ocamlType += " array";
+    }
+    // 5. Other. This includes: classes, interfaces? TODO
+    else {
+      ocamlType = constructObjcTypeFromBounds(type);
+    }
+    if (qualifiers != null) {
+      qualifiers = qualifiers.trim();
+      if (!qualifiers.isEmpty()) {
+        ocamlType += " " + qualifiers;
+      }
+    }
+    return ocamlType;
+  }
+
   private String constructObjcTypeFromBounds(TypeMirror type) {
     String classType = null;
     List<String> interfaces = new ArrayList<>();
+    // TODO trevor figure out what getObjcUpperBounds does
+    // for boolean[] it passes it thru
     for (TypeElement bound : typeUtil.getObjcUpperBounds(type)) {
       if (bound.getKind().isInterface()) {
         interfaces.add(getFullName(bound));

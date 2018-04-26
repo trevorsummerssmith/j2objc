@@ -62,17 +62,21 @@ public class OCamlStatementGenerator extends UnitTreeVisitor {
   }
 
   private void printMethodInvocationNameAndArgs(String selector, List<Expression> args) {
+    // TODO(trevor) im not totally sure what is going on here with the parsing
+    // of the ios args. revisit.
+    // the else branch i rewrote I think for us we can merge both branches
+    // into one but not positive right now. Will redo upon later revisit
     String[] selParts = selector.split(":");
     if (args.isEmpty()) {
       assert selParts.length == 1 && !selector.endsWith(":");
-      buffer.append(' ');
+      buffer.append('.');
       buffer.append(selector);
     } else {
-      assert selParts.length == args.size();
+      // Append method invocation then the args
+      buffer.append('.');
+      buffer.append(selector);
       for (int i = 0; i < args.size(); i++) {
         buffer.append(' ');
-        buffer.append(selParts[i]);
-        buffer.append(':');
         args.get(i).accept(this);
       }
     }
@@ -492,7 +496,6 @@ public class OCamlStatementGenerator extends UnitTreeVisitor {
 
     // Object receiving the message, or null if it's a method in this class.
     Expression receiver = node.getExpression();
-    buffer.append('[');
     if (ElementUtil.isStatic(element)) {
       buffer.append(nameTable.getFullName(ElementUtil.getDeclaringClass(element)));
     } else if (receiver != null) {
@@ -501,7 +504,6 @@ public class OCamlStatementGenerator extends UnitTreeVisitor {
       buffer.append("self");
     }
     printMethodInvocationNameAndArgs(nameTable.getMethodSelector(element), node.getArguments());
-    buffer.append(']');
     return false;
   }
 
@@ -849,11 +851,11 @@ public class OCamlStatementGenerator extends UnitTreeVisitor {
   @Override
   public boolean visit(VariableDeclarationFragment node) {
     buffer.append(nameTable.getVariableQualifiedName(node.getVariableElement()));
-    Expression initializer = node.getInitializer();
+    /*Expression initializer = node.getInitializer();
     if (initializer != null) {
       buffer.append(" = ");
       initializer.accept(this);
-    }
+    }*/
     return false;
   }
 
@@ -865,14 +867,14 @@ public class OCamlStatementGenerator extends UnitTreeVisitor {
     if (ElementUtil.suppressesWarning("unused", element)) {
       buffer.append("__unused ");
     }
-    String objcType = nameTable.getObjCType(element);
+    String ocamlType = nameTable.getOCamlType(element);
     String objcTypePointers = " ";
-    int idx = objcType.indexOf(" *");
+    int idx = ocamlType.indexOf(" *");
     if (idx != -1) {
       // Split the type at the first pointer. The second part of the type is
       // applied to each fragment. (eg. Foo *one, *two)
-      objcTypePointers = objcType.substring(idx);
-      objcType = objcType.substring(0, idx);
+      objcTypePointers = ocamlType.substring(idx);
+      ocamlType = ocamlType.substring(0, idx);
     }
     buffer.append("let ");
     // buffer.append(objcType);
@@ -881,13 +883,19 @@ public class OCamlStatementGenerator extends UnitTreeVisitor {
       f.accept(this);
       // We appended the var name, add type
       buffer.append(" : ");
-      buffer.append(objcType);
-      buffer.append(objcTypePointers);
+      buffer.append(ocamlType);
+      // TODO they would append objcTypePointers here
+      Expression initializer = f.getInitializer();
+      if (initializer != null) {
+        buffer.append(" = ");
+        initializer.accept(this);
+      }
+
       if (it.hasNext()) {
         buffer.append(",");
       }
     }
-    buffer.append(";\n");
+    buffer.append("\n");
     return false;
   }
 

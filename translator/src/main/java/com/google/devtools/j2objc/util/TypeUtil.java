@@ -78,7 +78,7 @@ public final class TypeUtil {
 
   static {
     Map<TypeKind, TypeElement> map = new EnumMap<>(TypeKind.class);
-    map.put(TypeKind.BOOLEAN, newPrimitiveIosArray("IOSBooleanArray"));
+    map.put(TypeKind.BOOLEAN, newPrimitiveIosArray("Array"));
     map.put(TypeKind.BYTE, newPrimitiveIosArray("IOSByteArray"));
     map.put(TypeKind.CHAR, newPrimitiveIosArray("IOSCharArray"));
     map.put(TypeKind.DOUBLE, newPrimitiveIosArray("IOSDoubleArray"));

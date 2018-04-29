@@ -620,13 +620,13 @@ public class NameTable {
 
   /* This is:
    *   java     bits      ocaml
- *   - byte    8bits    int   TODO think more
+ *   - byte    8bits    int   TODO char?
  *   - short  16bits    int   TODO Numbers.Int16
  *   - int    32bits    int   TODO Int32
  *   - long   64bits    int   TODO Int64
  *   - float  32bits    float TODO
  *   - double 32bits    float TODO
- *   - char             Uchar.t
+ *   - char             char
  *   - String           string
  *   - boolean          bool
  *   java types from: https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html
@@ -635,13 +635,13 @@ public class NameTable {
   // see paramNameForPrimitive
   private static String javaNativeToOCamlPrimitive(String name) {
     switch (name) {
-      case "byte": return "int";
+      case "byte": return "int"; // TODO is this right?
       case "short": return "int";
       case "int": return "int";
       case "long": return "int";
       case "float": return "float";
       case "double": return "float";
-      case "char": return "Uchar.t";
+      case "char": return "char"; // TODO change to UChar.t
       case "String": return "string";
       case "boolean": return "bool";
       default:
@@ -680,6 +680,8 @@ public class NameTable {
     // the reason this was being done with the array is that they turned it into a iosarray class. as we're
     // not doing this I think we can just deal with this here.
     else if (typeUtil.isArray(type)) {
+      // TODO we probably want to special case Bytes.t, UChar.t
+      // we can do that here
       ocamlType = getOCamlTypeInner(((ArrayType) type).getComponentType(), null);
       ocamlType += " array";
     }

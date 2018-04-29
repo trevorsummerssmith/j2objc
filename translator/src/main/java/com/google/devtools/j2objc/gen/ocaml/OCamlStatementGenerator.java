@@ -109,18 +109,19 @@ public class OCamlStatementGenerator extends UnitTreeVisitor {
     throw new AssertionError("ArrayCreation nodes are rewritten by ArrayRewriter.");
   }
 
+  // Eg {true, false}
   @Override
   public boolean visit(ArrayInitializer node) {
     javax.lang.model.type.ArrayType type = (javax.lang.model.type.ArrayType) node.getTypeMirror();
     TypeMirror componentType = type.getComponentType();
-    buffer.append(UnicodeUtils.format("(%s[]){ ", NameTable.getPrimitiveObjCType(componentType)));
+    buffer.append("[| ");
     for (Iterator<Expression> it = node.getExpressions().iterator(); it.hasNext(); ) {
       it.next().accept(this);
       if (it.hasNext()) {
-        buffer.append(", ");
+        buffer.append("; ");
       }
     }
-    buffer.append(" }");
+    buffer.append(" |]");
     return false;
   }
 

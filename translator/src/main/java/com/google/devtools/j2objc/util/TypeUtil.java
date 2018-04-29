@@ -79,13 +79,15 @@ public final class TypeUtil {
   static {
     Map<TypeKind, TypeElement> map = new EnumMap<>(TypeKind.class);
     map.put(TypeKind.BOOLEAN, newPrimitiveIosArray("Array"));
-    map.put(TypeKind.BYTE, newPrimitiveIosArray("IOSByteArray"));
-    map.put(TypeKind.CHAR, newPrimitiveIosArray("IOSCharArray"));
-    map.put(TypeKind.DOUBLE, newPrimitiveIosArray("IOSDoubleArray"));
-    map.put(TypeKind.FLOAT, newPrimitiveIosArray("IOSFloatArray"));
-    map.put(TypeKind.INT, newPrimitiveIosArray("IOSIntArray"));
-    map.put(TypeKind.LONG, newPrimitiveIosArray("IOSLongArray"));
-    map.put(TypeKind.SHORT, newPrimitiveIosArray("IOSShortArray"));
+    // TODO this should be Bytes.t
+    map.put(TypeKind.BYTE, newPrimitiveIosArray("Array"));
+    // TODO char should be Uchar.t
+    map.put(TypeKind.CHAR, newPrimitiveIosArray("Array"));
+    map.put(TypeKind.DOUBLE, newPrimitiveIosArray("Array"));
+    map.put(TypeKind.FLOAT, newPrimitiveIosArray("Array"));
+    map.put(TypeKind.INT, newPrimitiveIosArray("Array"));
+    map.put(TypeKind.LONG, newPrimitiveIosArray("Array"));
+    map.put(TypeKind.SHORT, newPrimitiveIosArray("Array"));
     PRIMITIVE_IOS_ARRAYS = map;
   }
 

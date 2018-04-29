@@ -11,3 +11,31 @@ phase takes that modified ast and generates the objc. At my first read it seems
 like a lot of the logic is tightly coupled between the translate and generation
 phases. Will proceed by implementing a few unit tests until I have a better
 understanding of the approach.
+
+Primitive type mappings:
+       java     bits      ocaml
+ *   - byte    8bits    char
+ *   - short  16bits    int   TODO Numbers.Int16
+ *   - int    32bits    int   TODO Int32
+ *   - long   64bits    int   TODO Int64
+ *   - float  32bits    float TODO
+ *   - double 32bits    float TODO
+ *   - char             Uchar.t
+ *   - String           string
+ *   - boolean          bool
+
+- arrays - for now just used the above primitive with array type
+  - Maybe should use BigArray?
+
+- Will use FIXTEST to note unit tests I want to come back to
+
+TODO/Questions:
+* Should we translate all types to bit specific eg Int32?
+  - perhaps in later versions this is an option?
+* Class arrays with no initializer eg Integer[] foo = new Integer[3];
+  from ArrayCreationTest. Need to figure out what to do, as OCaml
+  arrays require a value for initialization. I am thinking we can
+  recursively traverse the constructor and insert primitive values into
+  everything until we bottom out. This has the drawback that we'll need
+  signatures for all transitive deps... but i think thats pretty standard
+  anyhow with java projects.

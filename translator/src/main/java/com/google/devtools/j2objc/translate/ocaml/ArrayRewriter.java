@@ -46,12 +46,14 @@ public class ArrayRewriter extends UnitTreeVisitor {
     node.replaceWith(createInvocation(node));
   }
 
-  private MethodInvocation createInvocation(ArrayCreation node) {
+  // this just needs to return a TreeNode. can we return {true,false} here?
+  private TreeNode createInvocation(ArrayCreation node) {
     ArrayType arrayType = node.getTypeMirror();
     boolean retainedResult = node.hasRetainedResult() || options.useARC();
     ArrayInitializer initializer = node.getInitializer();
     if (initializer != null) {
-      return newInitializedArrayInvocation(arrayType, initializer.getExpressions(), retainedResult);
+
+      return new ArrayInitializer(initializer);
     } else {
       List<Expression> dimensions = node.getDimensions();
       if (dimensions.size() == 1) {
@@ -101,6 +103,7 @@ public class ArrayRewriter extends UnitTreeVisitor {
     return invocation;
   }
 
+  // TODO this probably gets nixed / we should use the TypeUtil and NameTable stuff
   private String paramNameForPrimitive(TypeMirror t) {
     switch (t.getKind()) {
       case BOOLEAN: return "Booleans";
@@ -130,14 +133,36 @@ public class ArrayRewriter extends UnitTreeVisitor {
     return UnicodeUtils.format(selectorFmt, paramName);
   }
 
+  // TODO maybe this should go in typeutil, or perhaps there is something i overlooked that does this already
+  private Expression javaTypeToInitialArrayElement(TypeMirror t, TypeUtil typeUtil) {
+    switch (t.getKind()) {
+      case BOOLEAN:
+        return new BooleanLiteral(true, typeUtil);
+      case CHAR:
+        // TODO putting '0' here but I want to put the null char however
+        // that is getting messed up when char is output to ocaml string.
+        // revisit
+        return new CharacterLiteral('0', typeUtil);
+      case DOUBLE:
+      case FLOAT:
+        return new NumberLiteral(0.0, typeUtil);
+      case BYTE:
+      case INT:
+      case LONG:
+      case SHORT:
+        return new NumberLiteral(0, typeUtil);
+      default:
+        throw new AssertionError("Trevor: not yet implemented for type: " + t);
+
+    }
+  }
+
   private MethodInvocation newSingleDimensionArrayInvocation(
       ArrayType arrayType, Expression dimensionExpr, boolean retainedResult) {
     TypeMirror componentType = arrayType.getComponentType();
     TypeElement iosArrayElement = typeUtil.getIosArray(componentType);
     boolean isPrimitive = componentType.getKind().isPrimitive();
 
-    //String selector = (retainedResult ? "newArray" : "array") + "WithLength:"
-    //    + (isPrimitive ? "" : "type:");
     String selector = "make";
     GeneratedExecutableElement methodElement = GeneratedExecutableElement.newMethodWithSelector(
         selector, arrayType, iosArrayElement)
@@ -145,10 +170,9 @@ public class ArrayRewriter extends UnitTreeVisitor {
     methodElement.addParameter(GeneratedVariableElement.newParameter(
         "length", typeUtil.getInt(), methodElement));
 
-    // Initilizer for OCaml
-    // TODO this needs to be type dependent
+    // Initializer for OCaml
     methodElement.addParameter(GeneratedVariableElement.newParameter(
-          "init", typeUtil.getBoolean(), methodElement));
+          "init", componentType, methodElement));
 
     MethodInvocation invocation = new MethodInvocation(
         new ExecutablePair(methodElement), arrayType, new SimpleName(iosArrayElement));
@@ -157,7 +181,8 @@ public class ArrayRewriter extends UnitTreeVisitor {
     invocation.addArgument(dimensionExpr.copy());
 
     // Initial value -- TODO how to decide this for other types?
-    invocation.addArgument(new BooleanLiteral(true, typeUtil));
+    Expression arrayInitialElement = javaTypeToInitialArrayElement(componentType, typeUtil);
+    invocation.addArgument(arrayInitialElement);
 
     // Add the type argument for object arrays.
     //if (!isPrimitive) {

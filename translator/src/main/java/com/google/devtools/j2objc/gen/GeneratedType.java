@@ -100,6 +100,7 @@ public class GeneratedType {
     typeNode.accept(importCollector);
 
     SourceBuilder builder = new SourceBuilder(emitLineDirectives);
+    // Trevor - this is where the item is generated (the publicDeclarationCode)
     TypeDeclarationGenerator.generate(builder, typeNode);
     String publicDeclarationCode = builder.toString();
 

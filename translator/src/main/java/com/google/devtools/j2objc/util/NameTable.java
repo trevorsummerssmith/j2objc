@@ -569,6 +569,10 @@ public class NameTable {
     return getObjcTypeInner(var.asType(), ElementUtil.getTypeQualifiers(var));
   }
 
+  public String getOCamlType(TypeMirror type) {
+    return getOCamlTypeInner(type, null);
+  }
+
   public String getOCamlType(VariableElement var) {
     return getOCamlTypeInner(var.asType(), ElementUtil.getTypeQualifiers(var));
   }

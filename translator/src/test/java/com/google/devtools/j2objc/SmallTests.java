@@ -25,7 +25,7 @@ import com.google.devtools.j2objc.gen.ArrayCreationTest;
 import com.google.devtools.j2objc.gen.JavadocGeneratorTest;
 import com.google.devtools.j2objc.gen.LineDirectivesTest;
 import com.google.devtools.j2objc.gen.LiteralGeneratorTest;
-import com.google.devtools.j2objc.gen.ObjectiveCHeaderGeneratorTest;
+import com.google.devtools.j2objc.gen.OCamlHeaderGeneratorTest;
 import com.google.devtools.j2objc.gen.ObjectiveCImplementationGeneratorTest;
 import com.google.devtools.j2objc.gen.ObjectiveCSegmentedHeaderGeneratorTest;
 import com.google.devtools.j2objc.gen.ObjectiveCSourceFileGeneratorTest;
@@ -143,7 +143,7 @@ public class SmallTests {
     NameTableTest.class,
     NilCheckResolverTest.class,
     NumberMethodRewriterTest.class,
-    ObjectiveCHeaderGeneratorTest.class,
+    OCamlHeaderGeneratorTest.class,
     ObjectiveCImplementationGeneratorTest.class,
     ObjectiveCSegmentedHeaderGeneratorTest.class,
     ObjectiveCSourceFileGeneratorTest.class,

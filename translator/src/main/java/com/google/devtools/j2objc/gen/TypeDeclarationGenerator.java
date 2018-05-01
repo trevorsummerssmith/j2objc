@@ -90,6 +90,7 @@ public class TypeDeclarationGenerator extends TypeGenerator {
     }
   }
 
+  // Trevor - this prints the header declaration (and maybe more)
   protected void generateInitialDeclaration() {
     if (typeNode.isDeadClass()) {
       printStaticFieldDeclarations();
@@ -101,33 +102,44 @@ public class TypeDeclarationGenerator extends TypeGenerator {
     if (typeElement.getKind().isInterface()) {
       printf("@protocol %s", typeName);
     } else {
-      printf("@interface %s : %s", typeName, getSuperTypeName());
+      // Module start
+      printf("module %s : sig\n", typeName); // TODO(trevor) helper for module names
+      indent();
     }
+
+    // After module, print the class body
+    printIndent();
+    printf("class %s : object", typeName.toLowerCase()); // TODO(trevor) classifyName helpfer
     printImplementedProtocols();
     if (!typeElement.getKind().isInterface()) {
       printInstanceVariables();
-    } else {
-      newline();
     }
+
     printProperties();
     if (!typeElement.getKind().isInterface()) {
       printStaticAccessors();
     }
     printInnerDeclarations();
-    println("\n@end");
 
     if (ElementUtil.isPackageInfo(typeElement)) {
       printOuterDeclarations();
       return;
     }
+
+    // end of class
+    printIndent();
+    println("end");
+
     printCompanionClassDeclaration();
-    printStaticInitFunction();
     printEnumConstants();
     printFieldSetters();
     printStaticFieldDeclarations();
     printOuterDeclarations();
-    printTypeLiteralDeclaration();
     printBoxedOperators();
+
+    // End module
+    unindent();
+    println("\nend");
 
     printUnprefixedAlias();
   }
@@ -452,7 +464,6 @@ public class TypeDeclarationGenerator extends TypeGenerator {
     if (Iterables.isEmpty(fields)) {
       return;
     }
-    newline();
     for (VariableDeclarationFragment fragment : fields) {
       VariableElement var = fragment.getVariableElement();
       String typeStr = nameTable.getObjCType(var.asType());
@@ -467,7 +478,12 @@ public class TypeDeclarationGenerator extends TypeGenerator {
   }
 
   protected void printStaticFieldDeclarations() {
-    for (VariableDeclarationFragment fragment : getStaticFields()) {
+    Iterable<VariableDeclarationFragment> fields = getStaticFields();
+    if (fields.iterator().hasNext()) {
+      printIndent();
+      println("(* Static fields *)");
+    }
+    for (VariableDeclarationFragment fragment : fields) {
       if (typeNode.isDeadClass()) {
         printDeadClassConstant(fragment);
       } else {
@@ -483,39 +499,50 @@ public class TypeDeclarationGenerator extends TypeGenerator {
     println("FOUNDATION_EXPORT " + baseDeclaration + ";");
   }
 
-  private void printStaticFieldFullDeclaration(VariableDeclarationFragment fragment) {
+  private void printStaticFieldFullDeclarationOCaml(VariableDeclarationFragment fragment) {
     VariableElement var = fragment.getVariableElement();
-    boolean isVolatile = ElementUtil.isVolatile(var);
-    String objcType = nameTable.getObjCType(var.asType());
-    String objcTypePadded = objcType + (objcType.endsWith("*") ? "" : " ");
-    String declType = getDeclarationType(var);
-    declType += (declType.endsWith("*") ? "" : " ");
+    String ocamlType = nameTable.getOCamlType(var.asType());
     String name = nameTable.getVariableShortName(var);
-    boolean isFinal = ElementUtil.isFinal(var);
-    boolean isPrimitive = var.asType().getKind().isPrimitive();
-    boolean isConstant = ElementUtil.isPrimitiveConstant(var);
-    String qualifiers = isConstant ? "_CONSTANT"
-        : (isPrimitive ? "_PRIMITIVE" : "_OBJ") + (isVolatile ? "_VOLATILE" : "")
-        + (isFinal ? "_FINAL" : "");
-    newline();
-    FieldDeclaration decl = (FieldDeclaration) fragment.getParent();
-    JavadocGenerator.printDocComment(getBuilder(), decl.getJavadoc());
-    printf("inline %s%s_get_%s(void);\n", objcTypePadded, typeName, name);
-    if (!isFinal) {
-      printf("inline %s%s_set_%s(%svalue);\n", objcTypePadded, typeName, name, objcTypePadded);
-      if (isPrimitive && !isVolatile) {
-        printf("inline %s *%s_getRef_%s(void);\n", objcType, typeName, name);
-      }
-    }
-    if (isConstant) {
-      Object value = var.getConstantValue();
-      assert value != null;
-      printf("#define %s_%s %s\n", typeName, name, LiteralGenerator.generate(value));
-    } else {
-      printStaticFieldDeclaration(
-          fragment, UnicodeUtils.format("%s%s_%s", declType, typeName, name));
-    }
-    printf("J2OBJC_STATIC_FIELD%s(%s, %s, %s)\n", qualifiers, typeName, name, objcType);
+    printIndent();
+    printf("val %s : %s", name, ocamlType);
+    return;
+  }
+
+  private void printStaticFieldFullDeclaration(VariableDeclarationFragment fragment) {
+    printStaticFieldFullDeclarationOCaml(fragment);
+    return;
+//    VariableElement var = fragment.getVariableElement();
+//    boolean isVolatile = ElementUtil.isVolatile(var);
+//    String objcType = nameTable.getObjCType(var.asType());
+//    String objcTypePadded = objcType + (objcType.endsWith("*") ? "" : " ");
+//    String declType = getDeclarationType(var);
+//    declType += (declType.endsWith("*") ? "" : " ");
+//    String name = nameTable.getVariableShortName(var);
+//    boolean isFinal = ElementUtil.isFinal(var);
+//    boolean isPrimitive = var.asType().getKind().isPrimitive();
+//    boolean isConstant = ElementUtil.isPrimitiveConstant(var);
+//    String qualifiers = isConstant ? "_CONSTANT"
+//        : (isPrimitive ? "_PRIMITIVE" : "_OBJ") + (isVolatile ? "_VOLATILE" : "")
+//        + (isFinal ? "_FINAL" : "");
+//    newline();
+//    FieldDeclaration decl = (FieldDeclaration) fragment.getParent();
+//    JavadocGenerator.printDocComment(getBuilder(), decl.getJavadoc());
+//    printf("inline %s%s_get_%s(void);\n", objcTypePadded, typeName, name);
+//    if (!isFinal) {
+//      printf("inline %s%s_set_%s(%svalue);\n", objcTypePadded, typeName, name, objcTypePadded);
+//      if (isPrimitive && !isVolatile) {
+//        printf("inline %s *%s_getRef_%s(void);\n", objcType, typeName, name);
+//      }
+//    }
+//    if (isConstant) {
+//      Object value = var.getConstantValue();
+//      assert value != null;
+//      printf("#define %s_%s %s\n", typeName, name, LiteralGenerator.generate(value));
+//    } else {
+//      printStaticFieldDeclaration(
+//          fragment, UnicodeUtils.format("%s%s_%s", declType, typeName, name));
+//    }
+//    printf("J2OBJC_STATIC_FIELD%s(%s, %s, %s)\n", qualifiers, typeName, name, objcType);
   }
 
   // Overridden in TypePrivateDeclarationGenerator
@@ -609,6 +636,13 @@ public class TypeDeclarationGenerator extends TypeGenerator {
   private void printMethodDeclaration(MethodDeclaration m, boolean isCompanionClass) {
     ExecutableElement methodElement = m.getExecutableElement();
     TypeElement typeElement = ElementUtil.getDeclaringClass(methodElement);
+
+    // TODO(trevor) java compiler adds the <init> method
+    // For now we skip this as it initializes things, which we already do.
+    // it is part of the JVM spec but not the java lang spec.
+    if (methodElement.getSimpleName().contentEquals("<init>")) {
+      return;
+    }
 
     if (typeElement.getKind().isInterface()) {
       // isCompanion and isStatic must be both false (i.e. this prints a non-static method decl
@@ -749,8 +783,6 @@ public class TypeDeclarationGenerator extends TypeGenerator {
         }
       }
       Collections.sort(methods, METHOD_DECL_ORDER);
-      newline();
-      println(category.header);
       printDeclarations(methods);
       printDeclarations(declarations);
     }

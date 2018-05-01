@@ -515,7 +515,7 @@ public class OCamlGenerationTest extends TestCase {
   protected String compileAndTranslateSourceFile(String source, String typeName, String fileName)
       throws IOException {
     CompilationUnit newUnit = compileAsClassFile(typeName, source);
-    TranslationProcessor.applyMutations(newUnit, deadCodeMap, TimeTracker.noop());
+    OCamlTranslationProcessor.applyMutations(newUnit, deadCodeMap, TimeTracker.noop());
     return generateFromUnit(newUnit, fileName);
   }
 

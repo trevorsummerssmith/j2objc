@@ -275,6 +275,9 @@ public abstract class TypeGenerator extends AbstractSourceGenerator {
 
   /**
    * Create an Objective-C method signature string.
+   * Trevor - here.
+   * TODO(trevor) why is this signature string being generated in TypeGenerator
+   * but the let statement fragment is generated in StatementGenerator?
    */
   protected String getMethodSignature(MethodDeclaration m) {
     StringBuilder sb = new StringBuilder();

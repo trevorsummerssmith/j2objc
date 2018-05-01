@@ -29,7 +29,7 @@ import java.util.Set;
  *
  * @author Tom Ball
  */
-public class ObjectiveCHeaderGenerator extends ObjectiveCSourceFileGenerator {
+public class OCamlHeaderGenerator extends ObjectiveCSourceFileGenerator {
 
   // The prefix to use for preprocessor variable names. Derived from the path of
   // the generated file. For example if "my/pkg/Foo.h" is being generated the
@@ -40,10 +40,10 @@ public class ObjectiveCHeaderGenerator extends ObjectiveCSourceFileGenerator {
    * Generate an Objective-C header file for each type declared in the given {@link GenerationUnit}.
    */
   public static void generate(GenerationUnit unit) {
-    new ObjectiveCHeaderGenerator(unit).generate();
+    new OCamlHeaderGenerator(unit).generate();
   }
 
-  protected ObjectiveCHeaderGenerator(GenerationUnit unit) {
+  protected OCamlHeaderGenerator(GenerationUnit unit) {
     super(unit, false);
     varPrefix = getVarPrefix(unit.getOutputPath());
   }

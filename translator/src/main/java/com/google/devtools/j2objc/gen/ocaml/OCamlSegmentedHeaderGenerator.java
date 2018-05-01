@@ -29,15 +29,15 @@ import java.util.Set;
  *
  * @author Keith Stanger
  */
-public class ObjectiveCSegmentedHeaderGenerator extends ObjectiveCHeaderGenerator {
+public class OCamlSegmentedHeaderGenerator extends OCamlHeaderGenerator {
 
 
-  protected ObjectiveCSegmentedHeaderGenerator(GenerationUnit unit) {
+  protected OCamlSegmentedHeaderGenerator(GenerationUnit unit) {
     super(unit);
   }
 
   public static void generate(GenerationUnit unit) {
-    new ObjectiveCSegmentedHeaderGenerator(unit).generate();
+    new OCamlSegmentedHeaderGenerator(unit).generate();
   }
 
   @Override

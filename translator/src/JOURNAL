@@ -1,4 +1,6 @@
-* Finished adding 'true'.
+* Will continue now with the most simple language primitives.
+
+* Finished adding 'true' for array.
 
 * Left off at printMethodInvocationNameAndArgs
   - we are replacing the ArrayCreation node with a method invocation.
@@ -30,8 +32,17 @@ Primitive type mappings:
 - Will use FIXTEST to note unit tests I want to come back to
 
 TODO/Questions:
+* add `type t` to modules
+* figure out 'ref' for everything
+* recursively defined types?
+* Concurrency and jvm runtime properties, how do these translate?
+* How to represent the fact that all variables are mutable?
+  - (option 1) make everything mutable. variables with 'final' keyword can be immutable.
+  - is there some way to make multiple interfaces? a mutable one (so that all of the library code will compile as-is) and an immutable one?
 * Should we translate all types to bit specific eg Int32?
   - perhaps in later versions this is an option?
+* final variables - could expose these as readonly. the downside here is that
+  if the code removes the final, the types will all break, but that's probably ok.
 * Class arrays with no initializer eg Integer[] foo = new Integer[3];
   from ArrayCreationTest. Need to figure out what to do, as OCaml
   arrays require a value for initialization. I am thinking we can

@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-package com.google.devtools.j2objc.gen;
+package com.google.devtools.j2objc.gen.ocaml;
 
 import com.google.devtools.j2objc.GenerationTest;
+import com.google.devtools.j2objc.OCamlGenerationTest;
+import com.google.devtools.j2objc.gen.ObjectiveCHeaderGenerator;
 import com.google.devtools.j2objc.util.HeaderMap;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -26,7 +29,7 @@ import java.io.IOException;
  *
  * @author Tom Ball
  */
-public class ObjectiveCHeaderGeneratorTest extends GenerationTest {
+public class OCamlHeaderGeneratorTest extends OCamlGenerationTest {
 
   public void testInnerEnumWithPackage() throws IOException {
     String translation = translateSourceFile(
@@ -374,16 +377,15 @@ public class ObjectiveCHeaderGeneratorTest extends GenerationTest {
 
   public void testStaticVariableTranslation() throws IOException {
     String translation = translateSourceFile(
-        "public class Example { public static java.util.Date today; }",
+        "public class Example { public static int today; }",
         "Example", "Example.h");
     assertTranslatedLines(translation,
-        "inline JavaUtilDate *Example_get_today(void);",
-        "inline JavaUtilDate *Example_set_today(JavaUtilDate *value);",
-        "/*! INTERNAL ONLY - Use accessor function from above. */",
-        "FOUNDATION_EXPORT JavaUtilDate *Example_today;",
-        "J2OBJC_STATIC_FIELD_OBJ(Example, today, JavaUtilDate *)");
-    assertFalse(translation.contains("initialize"));
-    assertFalse(translation.contains("dealloc"));
+            "module Example : sig",
+            "  class example : object",
+            "  end",
+            "  (* Static fields *)",
+            "  val today : int",
+            "end");
   }
 
   public void testStaticVariableWithInitTranslation() throws IOException {

@@ -32,10 +32,7 @@ import com.google.devtools.j2objc.file.RegularInputFile;
 import com.google.devtools.j2objc.gen.GenerationUnit;
 import com.google.devtools.j2objc.gen.SourceBuilder;
 import com.google.devtools.j2objc.gen.StatementGenerator;
-import com.google.devtools.j2objc.pipeline.GenerationBatch;
-import com.google.devtools.j2objc.pipeline.InputFilePreprocessor;
-import com.google.devtools.j2objc.pipeline.ProcessingContext;
-import com.google.devtools.j2objc.pipeline.TranslationProcessor;
+import com.google.devtools.j2objc.pipeline.*;
 import com.google.devtools.j2objc.util.CodeReferenceMap;
 import com.google.devtools.j2objc.util.ElementUtil;
 import com.google.devtools.j2objc.util.ErrorUtil;
@@ -170,7 +167,7 @@ public class GenerationTest extends TestCase {
    */
   protected CompilationUnit translateType(String typeName, String source) {
     CompilationUnit newUnit = compileType(typeName, source);
-    TranslationProcessor.applyMutations(newUnit, deadCodeMap, TimeTracker.noop());
+    OCamlTranslationProcessor.applyMutations(newUnit, deadCodeMap, TimeTracker.noop());
     return newUnit;
   }
 
@@ -536,7 +533,7 @@ public class GenerationTest extends TestCase {
   protected String compileAndTranslateSourceFile(String source, String typeName, String fileName)
       throws IOException {
     CompilationUnit newUnit = compileAsClassFile(typeName, source);
-    TranslationProcessor.applyMutations(newUnit, deadCodeMap, TimeTracker.noop());
+    OCamlTranslationProcessor.applyMutations(newUnit, deadCodeMap, TimeTracker.noop());
     return generateFromUnit(newUnit, fileName);
   }
 

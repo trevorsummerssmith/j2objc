@@ -14,102 +14,26 @@
  * limitations under the License.
  */
 
-package com.google.devtools.j2objc.gen;
+package com.google.devtools.j2objc.gen.ocaml;
 
 import com.google.common.base.CharMatcher;
-import com.google.devtools.j2objc.ast.ArrayAccess;
-import com.google.devtools.j2objc.ast.ArrayCreation;
-import com.google.devtools.j2objc.ast.ArrayInitializer;
-import com.google.devtools.j2objc.ast.ArrayType;
-import com.google.devtools.j2objc.ast.AssertStatement;
-import com.google.devtools.j2objc.ast.Assignment;
-import com.google.devtools.j2objc.ast.Block;
-import com.google.devtools.j2objc.ast.BooleanLiteral;
-import com.google.devtools.j2objc.ast.BreakStatement;
-import com.google.devtools.j2objc.ast.CStringLiteral;
-import com.google.devtools.j2objc.ast.CastExpression;
-import com.google.devtools.j2objc.ast.CatchClause;
-import com.google.devtools.j2objc.ast.CharacterLiteral;
-import com.google.devtools.j2objc.ast.ClassInstanceCreation;
-import com.google.devtools.j2objc.ast.CommaExpression;
-import com.google.devtools.j2objc.ast.ConditionalExpression;
-import com.google.devtools.j2objc.ast.ConstructorInvocation;
-import com.google.devtools.j2objc.ast.ContinueStatement;
-import com.google.devtools.j2objc.ast.CreationReference;
-import com.google.devtools.j2objc.ast.Dimension;
-import com.google.devtools.j2objc.ast.DoStatement;
-import com.google.devtools.j2objc.ast.EmptyStatement;
-import com.google.devtools.j2objc.ast.EnhancedForStatement;
-import com.google.devtools.j2objc.ast.Expression;
-import com.google.devtools.j2objc.ast.ExpressionMethodReference;
-import com.google.devtools.j2objc.ast.ExpressionStatement;
-import com.google.devtools.j2objc.ast.FieldAccess;
-import com.google.devtools.j2objc.ast.ForStatement;
-import com.google.devtools.j2objc.ast.FunctionInvocation;
-import com.google.devtools.j2objc.ast.IfStatement;
-import com.google.devtools.j2objc.ast.InfixExpression;
-import com.google.devtools.j2objc.ast.Initializer;
-import com.google.devtools.j2objc.ast.InstanceofExpression;
-import com.google.devtools.j2objc.ast.IntersectionType;
-import com.google.devtools.j2objc.ast.LabeledStatement;
-import com.google.devtools.j2objc.ast.LambdaExpression;
-import com.google.devtools.j2objc.ast.MarkerAnnotation;
-import com.google.devtools.j2objc.ast.MethodInvocation;
-import com.google.devtools.j2objc.ast.Name;
-import com.google.devtools.j2objc.ast.NameQualifiedType;
-import com.google.devtools.j2objc.ast.NativeExpression;
-import com.google.devtools.j2objc.ast.NativeStatement;
-import com.google.devtools.j2objc.ast.NormalAnnotation;
-import com.google.devtools.j2objc.ast.NullLiteral;
-import com.google.devtools.j2objc.ast.NumberLiteral;
-import com.google.devtools.j2objc.ast.ParenthesizedExpression;
-import com.google.devtools.j2objc.ast.PostfixExpression;
-import com.google.devtools.j2objc.ast.PrefixExpression;
-import com.google.devtools.j2objc.ast.PrimitiveType;
-import com.google.devtools.j2objc.ast.QualifiedName;
-import com.google.devtools.j2objc.ast.QualifiedType;
-import com.google.devtools.j2objc.ast.ReturnStatement;
-import com.google.devtools.j2objc.ast.SimpleName;
-import com.google.devtools.j2objc.ast.SimpleType;
-import com.google.devtools.j2objc.ast.SingleMemberAnnotation;
-import com.google.devtools.j2objc.ast.SingleVariableDeclaration;
-import com.google.devtools.j2objc.ast.Statement;
-import com.google.devtools.j2objc.ast.StringLiteral;
-import com.google.devtools.j2objc.ast.SuperConstructorInvocation;
-import com.google.devtools.j2objc.ast.SuperFieldAccess;
-import com.google.devtools.j2objc.ast.SuperMethodInvocation;
-import com.google.devtools.j2objc.ast.SuperMethodReference;
-import com.google.devtools.j2objc.ast.SwitchCase;
-import com.google.devtools.j2objc.ast.SwitchStatement;
-import com.google.devtools.j2objc.ast.SynchronizedStatement;
-import com.google.devtools.j2objc.ast.ThisExpression;
-import com.google.devtools.j2objc.ast.ThrowStatement;
-import com.google.devtools.j2objc.ast.TreeNode;
+import com.google.devtools.j2objc.ast.*;
 import com.google.devtools.j2objc.ast.TreeNode.Kind;
-import com.google.devtools.j2objc.ast.TreeUtil;
-import com.google.devtools.j2objc.ast.TreeVisitor;
-import com.google.devtools.j2objc.ast.TryStatement;
-import com.google.devtools.j2objc.ast.Type;
-import com.google.devtools.j2objc.ast.TypeLiteral;
-import com.google.devtools.j2objc.ast.TypeMethodReference;
-import com.google.devtools.j2objc.ast.UnionType;
-import com.google.devtools.j2objc.ast.UnitTreeVisitor;
-import com.google.devtools.j2objc.ast.VariableDeclarationExpression;
-import com.google.devtools.j2objc.ast.VariableDeclarationFragment;
-import com.google.devtools.j2objc.ast.VariableDeclarationStatement;
-import com.google.devtools.j2objc.ast.WhileStatement;
+import com.google.devtools.j2objc.gen.LiteralGenerator;
+import com.google.devtools.j2objc.gen.SourceBuilder;
 import com.google.devtools.j2objc.util.ElementUtil;
 import com.google.devtools.j2objc.util.NameTable;
 import com.google.devtools.j2objc.util.TypeUtil;
 import com.google.devtools.j2objc.util.UnicodeUtils;
-import java.util.Iterator;
-import java.util.List;
+
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Returns an Objective-C equivalent of a Java AST node.
@@ -752,9 +676,7 @@ public class StatementGenerator extends UnitTreeVisitor {
 
   @Override
   public boolean visit(SuperConstructorInvocation node) {
-    // TODO(trevor) revisit when we do inheritance
-    //throw new AssertionError("SuperConstructorInvocation nodes are rewritten by Functionizer.");
-    return false;
+    throw new AssertionError("SuperConstructorInvocation nodes are rewritten by Functionizer.");
   }
 
   @Override

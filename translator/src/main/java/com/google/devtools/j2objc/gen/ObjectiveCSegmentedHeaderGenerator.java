@@ -42,21 +42,9 @@ public class ObjectiveCSegmentedHeaderGenerator extends ObjectiveCHeaderGenerato
 
   @Override
   protected void generateFileHeader() {
-    println("#include \"J2ObjC_header.h\"");
-    newline();
-    printf("#pragma push_macro(\"INCLUDE_ALL_%s\")\n", varPrefix);
-    printf("#ifdef RESTRICT_%s\n", varPrefix);
-    printf("#define INCLUDE_ALL_%s 0\n", varPrefix);
-    println("#else");
-    printf("#define INCLUDE_ALL_%s 1\n", varPrefix);
-    println("#endif");
-    printf("#undef RESTRICT_%s\n", varPrefix);
-
     for (GeneratedType type : Lists.reverse(getOrderedTypes())) {
       printLocalIncludes(type);
     }
-    pushIgnoreDeprecatedDeclarationsPragma();
-    pushIgnoreNullabilityCompletenessPragma();
 
     // Print OCNI blocks
     Collection<String> nativeBlocks = getGenerationUnit().getNativeHeaderBlocks();
@@ -102,7 +90,6 @@ public class ObjectiveCSegmentedHeaderGenerator extends ObjectiveCHeaderGenerato
     newline();
     popIgnoreNullabilityCompletenessPragma();
     popIgnoreDeprecatedDeclarationsPragma();
-    printf("#pragma pop_macro(\"INCLUDE_ALL_%s\")\n", varPrefix);
   }
 
   @Override
@@ -112,11 +99,6 @@ public class ObjectiveCSegmentedHeaderGenerator extends ObjectiveCHeaderGenerato
     if (code.length() == 0) {
       return;
     }
-
-    newline();
-    printf("#if !defined (%s_) && (INCLUDE_ALL_%s || defined(INCLUDE_%s))\n",
-        typeName, varPrefix, typeName);
-    printf("#define %s_\n", typeName);
 
     Set<Import> forwardDeclarations = Sets.newHashSet(type.getHeaderForwardDeclarations());
 
@@ -136,6 +118,5 @@ public class ObjectiveCSegmentedHeaderGenerator extends ObjectiveCHeaderGenerato
 
     print(code);
     newline();
-    println("#endif");
   }
 }

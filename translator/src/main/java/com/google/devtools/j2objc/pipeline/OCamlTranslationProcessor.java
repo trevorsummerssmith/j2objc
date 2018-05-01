@@ -210,8 +210,11 @@ public class OCamlTranslationProcessor extends FileProcessor {
     ticker.tick("DestructorGenerator");
 
     // Before: StaticVarRewriter - Generates static variable access expressions.
-    new MetadataWriter(unit, deadCodeMap).run();
-    ticker.tick("MetadataWriter");
+    // TODO(trevor) this adds objc meta variables about the class
+    // we don't need it right now but keeping here until I have a firmer grasp
+    // of the codebase
+    //new MetadataWriter(unit, deadCodeMap).run();
+    //ticker.tick("MetadataWriter");
 
     // Before: Functionizer - Needs to rewrite some ClassInstanceCreation nodes
     //   before Functionizer does.
@@ -222,8 +225,10 @@ public class OCamlTranslationProcessor extends FileProcessor {
 
     // After: OcniExtractor - So that native methods can be correctly
     //   functionized.
-    new Functionizer(unit).run();
-    ticker.tick("Functionizer");
+    // TODO(trevor) this adds objc initializers
+    // commenting it out, will remove once I understand codebase better
+    //new Functionizer(unit).run();
+    //ticker.tick("Functionizer");
 
     // After: Functionizer - Edits the qualifier on SuperMethodInvocation nodes.
     new SuperMethodInvocationRewriter(unit).run();

@@ -31,6 +31,32 @@ import java.io.IOException;
  */
 public class OCamlHeaderGeneratorTest extends OCamlGenerationTest {
 
+  public void testEmptyClassTranslation() throws IOException {
+    String translation = translateSourceFile(
+            "public class Example { }",
+            "Example", "Example.h");
+    assertTranslatedLines(translation,
+            "module Example : sig",
+            "  class example : object",
+            "  end",
+            "  val make : unit -> example",
+            "end");
+  }
+
+  public void testSimpleInstanceVariableTranslation() throws IOException {
+    String translation = translateSourceFile(
+            // Example(String s) {} Example(int a) { foo = 10; }
+            "public class Example { int foo; }",
+            "Example", "Example.h");
+    assertTranslatedLines(translation,
+            "module Example : sig",
+            "  class example : object",
+            "    val foo : int",
+            "  end",
+            "  val make : unit -> example",
+            "end");
+  }
+
   public void testInnerEnumWithPackage() throws IOException {
     String translation = translateSourceFile(
         "package mypackage;"

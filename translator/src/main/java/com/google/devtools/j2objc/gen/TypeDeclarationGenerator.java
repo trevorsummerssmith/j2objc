@@ -41,6 +41,8 @@ import com.google.devtools.j2objc.util.TranslationUtil;
 import com.google.devtools.j2objc.util.TypeUtil;
 import com.google.devtools.j2objc.util.UnicodeUtils;
 import com.google.j2objc.annotations.Property;
+
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.Comparator;
@@ -109,7 +111,8 @@ public class TypeDeclarationGenerator extends TypeGenerator {
 
     // After module, print the class body
     printIndent();
-    printf("class %s : object", typeName.toLowerCase()); // TODO(trevor) classifyName helpfer
+    printf("class %s : object\n", javaClassToOCamlClassName(typeElement));
+    indent();
     printImplementedProtocols();
     if (!typeElement.getKind().isInterface()) {
       printInstanceVariables();
@@ -119,7 +122,7 @@ public class TypeDeclarationGenerator extends TypeGenerator {
     if (!typeElement.getKind().isInterface()) {
       printStaticAccessors();
     }
-    printInnerDeclarations();
+     printInnerDeclarations();
 
     if (ElementUtil.isPackageInfo(typeElement)) {
       printOuterDeclarations();
@@ -127,9 +130,11 @@ public class TypeDeclarationGenerator extends TypeGenerator {
     }
 
     // end of class
+    unindent();
     printIndent();
     println("end");
 
+    printConstructors();
     printCompanionClassDeclaration();
     printEnumConstants();
     printFieldSetters();
@@ -139,7 +144,7 @@ public class TypeDeclarationGenerator extends TypeGenerator {
 
     // End module
     unindent();
-    println("\nend");
+    println("end");
 
     printUnprefixedAlias();
   }
@@ -261,19 +266,16 @@ public class TypeDeclarationGenerator extends TypeGenerator {
   protected void printInstanceVariables() {
     Iterable<VariableDeclarationFragment> fields = getInstanceFields();
     if (Iterables.isEmpty(fields)) {
-      newline();
       return;
     }
-    // Need direct access to fields possibly from inner classes that are
-    // promoted to top level classes, so must make all visible fields public.
-    println(" {");
-    println(" @public");
-    indent();
+
     FieldDeclaration lastDeclaration = null;
     boolean needsAsterisk = false;
     for (VariableDeclarationFragment fragment : fields) {
       VariableElement varElement = fragment.getVariableElement();
       FieldDeclaration declaration = (FieldDeclaration) fragment.getParent();
+      String ocamlType = getDeclarationType(varElement);
+
       if (declaration != lastDeclaration) {
         if (lastDeclaration != null) {
           println(";");
@@ -286,26 +288,24 @@ public class TypeDeclarationGenerator extends TypeGenerator {
           // included by a file compiled with ARC.
           print("__unsafe_unretained ");
         }
-        String objcType = getDeclarationType(varElement);
-        needsAsterisk = objcType.endsWith("*");
+        needsAsterisk = ocamlType.endsWith("*");
         if (needsAsterisk) {
           // Strip pointer from type, as it will be added when appending fragment.
           // This is necessary to create "Foo *one, *two;" declarations.
-          objcType = objcType.substring(0, objcType.length() - 2);
+          ocamlType = ocamlType.substring(0, ocamlType.length() - 2);
         }
-        print(objcType);
-        print(' ');
       } else {
         print(", ");
       }
       if (needsAsterisk) {
         print('*');
       }
-      print(nameTable.getVariableShortName(varElement));
+      // TODO helper for val printing
+      printf("val %s : %s", nameTable.getVariableBaseName(varElement),
+              ocamlType
+              );
     }
-    println(";");
-    unindent();
-    println("}");
+    println(""); // end of declaration
   }
 
   /**
@@ -504,7 +504,7 @@ public class TypeDeclarationGenerator extends TypeGenerator {
     String ocamlType = nameTable.getOCamlType(var.asType());
     String name = nameTable.getVariableShortName(var);
     printIndent();
-    printf("val %s : %s", name, ocamlType);
+    printf("val %s : %s\n", name, ocamlType);
     return;
   }
 
@@ -637,13 +637,6 @@ public class TypeDeclarationGenerator extends TypeGenerator {
     ExecutableElement methodElement = m.getExecutableElement();
     TypeElement typeElement = ElementUtil.getDeclaringClass(methodElement);
 
-    // TODO(trevor) java compiler adds the <init> method
-    // For now we skip this as it initializes things, which we already do.
-    // it is part of the JVM spec but not the java lang spec.
-    if (methodElement.getSimpleName().contentEquals("<init>")) {
-      return;
-    }
-
     if (typeElement.getKind().isInterface()) {
       // isCompanion and isStatic must be both false (i.e. this prints a non-static method decl
       // in @protocol) or must both be true (i.e. this prints a static method decl in the
@@ -653,7 +646,6 @@ public class TypeDeclarationGenerator extends TypeGenerator {
       }
     }
 
-    newline();
     JavadocGenerator.printDocComment(getBuilder(), m.getJavadoc());
     print(getMethodSignature(m));
     String methodName = nameTable.getMethodSelector(methodElement);
@@ -675,7 +667,7 @@ public class TypeDeclarationGenerator extends TypeGenerator {
     if (m.isUnavailable()) {
       print(" NS_UNAVAILABLE");
     }
-    println(";");
+    newline();
   }
 
   @Override
@@ -752,6 +744,54 @@ public class TypeDeclarationGenerator extends TypeGenerator {
   }
 
   /**
+   * Print constructors using the <init> methods
+   * OCaml constructors are functions on the module, as OCaml classes do not have static methods.
+   */
+  private void printConstructors() {
+    // Everything is public in interfaces.
+    if (isInterfaceType() || typeNode.hasPrivateDeclaration()) {
+      super.printInnerDeclarations();
+      return;
+    }
+    List<MethodDeclaration> methods = Lists.newArrayList();
+
+    ListMultimap<DeclarationCategory, MethodDeclaration> categorizedDecls =
+            MultimapBuilder.hashKeys().arrayListValues().build();
+    for (BodyDeclaration innerDecl : getInnerDeclarations()) {
+      if (innerDecl instanceof MethodDeclaration) {
+        MethodDeclaration m = (MethodDeclaration) innerDecl;
+        methods.add(m);
+        ExecutableElement methodElement = m.getExecutableElement();
+        TypeElement typeElement = ElementUtil.getDeclaringClass(methodElement);
+        if (methodElement.getSimpleName().contentEquals("<init>")) {
+          categorizedDecls.put(DeclarationCategory.categorize(innerDecl), m);
+        }
+      }
+    }
+    // Emit the categorized declarations using the declaration order of the category values.
+    // TODO trevor - right now I am keeping this ordered printing to print the constructors
+    // in private, public groupings. I am not sure yet if this is only called on the interface
+    // though, in which case we will only print public methods. If that is the case this whole
+    // method can be drastically shortened.
+    for (DeclarationCategory category : DeclarationCategory.values()) {
+      List<MethodDeclaration> declarations = categorizedDecls.get(category);
+      if (declarations.isEmpty()) {
+        continue;
+      }
+      Collections.sort(declarations, METHOD_DECL_ORDER);
+
+      for (MethodDeclaration m : declarations) {
+        ExecutableElement methodElement = m.getExecutableElement();
+        TypeElement typeElement = ElementUtil.getDeclaringClass(methodElement);
+        if (methodElement.getSimpleName().contentEquals("<init>")) {
+          printIndent();
+          printMethodDeclaration(m);
+        }
+      }
+    }
+  }
+
+  /**
    * Print method declarations with #pragma mark lines documenting their scope.
    */
   @Override
@@ -765,6 +805,14 @@ public class TypeDeclarationGenerator extends TypeGenerator {
     ListMultimap<DeclarationCategory, BodyDeclaration> categorizedDecls =
         MultimapBuilder.hashKeys().arrayListValues().build();
     for (BodyDeclaration innerDecl : getInnerDeclarations()) {
+      // The method constructor <init> methods will be marked here as inner declarations
+      // Skip them as they are turned into OCaml module level constructors
+      if (innerDecl instanceof MethodDeclaration) {
+        MethodDeclaration m = (MethodDeclaration)innerDecl;
+        if (m.getExecutableElement().getSimpleName().contentEquals("<init>")) {
+          continue;
+        }
+      }
       categorizedDecls.put(DeclarationCategory.categorize(innerDecl), innerDecl);
     }
     // Emit the categorized declarations using the declaration order of the category values.

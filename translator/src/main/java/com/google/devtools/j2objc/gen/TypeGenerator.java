@@ -18,18 +18,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.devtools.j2objc.Options;
-import com.google.devtools.j2objc.ast.AbstractTypeDeclaration;
-import com.google.devtools.j2objc.ast.BodyDeclaration;
-import com.google.devtools.j2objc.ast.CompilationUnit;
-import com.google.devtools.j2objc.ast.Expression;
-import com.google.devtools.j2objc.ast.FieldDeclaration;
-import com.google.devtools.j2objc.ast.FunctionDeclaration;
-import com.google.devtools.j2objc.ast.MethodDeclaration;
-import com.google.devtools.j2objc.ast.NativeDeclaration;
-import com.google.devtools.j2objc.ast.SingleVariableDeclaration;
-import com.google.devtools.j2objc.ast.TreeNode;
-import com.google.devtools.j2objc.ast.TreeUtil;
-import com.google.devtools.j2objc.ast.VariableDeclarationFragment;
+import com.google.devtools.j2objc.ast.*;
 import com.google.devtools.j2objc.util.ElementUtil;
 import com.google.devtools.j2objc.util.NameTable;
 import com.google.devtools.j2objc.util.TranslationEnvironment;
@@ -269,8 +258,23 @@ public abstract class TypeGenerator extends AbstractSourceGenerator {
     if (ElementUtil.isVolatile(var)) {
       return "volatile_" + NameTable.getPrimitiveObjCType(type);
     } else {
-      return nameTable.getObjCType(type);
+      return nameTable.getOCamlType(type);
     }
+  }
+
+  // Our OCaml class name is the class name, in lower case
+  // TODO probably this should be underscores?
+  // TODO where should this live?
+  protected String javaClassToOCamlClassName(TypeElement ty) {
+    return javaClassToOCamlClassName(typeElement.getSimpleName());
+  }
+
+  protected String javaClassToOCamlClassName(javax.lang.model.element.Name name) {
+    return javaClassToOCamlClassName(name.toString());
+  }
+
+  protected String javaClassToOCamlClassName(String name) {
+    return name.toLowerCase();
   }
 
   /**
@@ -284,21 +288,24 @@ public abstract class TypeGenerator extends AbstractSourceGenerator {
     ExecutableElement element = m.getExecutableElement();
     char prefix = Modifier.isStatic(m.getModifiers()) ? '+' : '-';
     String returnType = nameTable.getObjCType(element.getReturnType());
-    String selector = nameTable.getMethodSelector(element);
+    String name = nameTable.getMethodSelector(element);
     if (m.isConstructor()) {
-      returnType = "instancetype";
-    } else if (selector.equals("hash")) {
+      // TODO can we rely on every constructor's enclosing element being the class?
+      returnType = javaClassToOCamlClassName(element.getEnclosingElement().getSimpleName());
+      name = "make";
+    } else if (name.equals("hash")) {
       // Explicitly test hashCode() because of NSObject's hash return value.
       returnType = "NSUInteger";
     }
-    sb.append(UnicodeUtils.format("%c (%s%s)", prefix, returnType, nullability(element)));
+    sb.append(UnicodeUtils.format("val %s :", name));
 
     List<SingleVariableDeclaration> params = m.getParameters();
-    String[] selParts = selector.split(":");
+    String[] selParts = name.split(":");
 
+    // If there are no params add 'unit'
     if (params.isEmpty()) {
-      assert selParts.length == 1 && !selector.endsWith(":");
-      sb.append(selParts[0]);
+      assert selParts.length == 1 && !name.endsWith(":");
+      sb.append(" unit");
     } else {
       assert params.size() == selParts.length;
       int baseLength = sb.length() + selParts[0].length();
@@ -313,6 +320,9 @@ public abstract class TypeGenerator extends AbstractSourceGenerator {
             nameTable.getVariableShortName(var)));
       }
     }
+
+    // Add return type
+    sb.append(UnicodeUtils.format(" -> %s", returnType));
 
     return sb.toString();
   }
